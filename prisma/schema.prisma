@@ -1,0 +1,177 @@
+generator client {
+  provider   = "prisma-client"
+  output     = "../generated/prisma"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("pme")
+  company   Company? @relation(fields: [companyId], references: [id])
+  companyId String?
+  createdAt DateTime @default(now())
+  emailVerified DateTime?
+  image     String?
+  passwordHash String?
+  accounts  Account[]
+  sessions  Session[]
+}
+
+model Company {
+  id        String    @id @default(cuid())
+  name      String
+  rc        String?
+  ice       String?
+  country   String?
+  createdAt DateTime  @default(now())
+  users     User[]
+  documents Document[]
+  swifts    Swift[]
+  auctions  Auction[]
+  kyc       KycProfile?
+  verificationCodes VerificationCode[]
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  company   Company  @relation(fields: [companyId], references: [id])
+  companyId String
+  type      String
+  fileName  String
+  mimeType  String?
+  contentBase64 String?
+  createdAt DateTime @default(now())
+}
+
+model Swift {
+  id           String   @id @default(cuid())
+  company      Company  @relation(fields: [companyId], references: [id])
+  companyId    String
+  reference    String   @unique
+  amount       Float
+  currency     String
+  parsedJson   Json
+  validated    Boolean  @default(false)
+  validatedAt  DateTime?
+  adminStatus  String   @default("pending")
+  rejectionReason String?
+  createdAt    DateTime @default(now())
+  // Expiration et stratégie de taux
+  expiresAt    DateTime? // Date d'expiration (30 jours par défaut selon IGOC Maroc)
+  rateStrategy String?  @default("auction") // "auction" ou "spotting"
+  targetRate   Float?   // Taux cible pour spotting (ex: 1.10 pour EUR/USD)
+  targetCurrency String? // Paire de devises pour spotting (ex: "EUR/USD")
+  rateTriggeredAt DateTime? // Date à laquelle le taux cible a été atteint
+  splitMode    String?  @default("IGOC_30") // "IGOC_30" (70/30) ou "FULL_100" (100%)
+}
+
+model Auction {
+  id             String   @id @default(cuid())
+  company        Company  @relation(fields: [companyId], references: [id])
+  companyId      String
+  title          String
+  amount         Float
+  sourceCurrency String
+  targetCurrency String
+  description    String?
+  duration       Int
+  status         String   @default("active")
+  createdBy      String
+  createdAt      DateTime @default(now())
+  endsAt         DateTime
+  swiftReference String?
+  bids           Bid[]
+}
+
+model Bid {
+  id        String   @id @default(cuid())
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  auctionId String
+  bankId    String
+  bankName  String
+  rate      Float
+  charges   Float
+  terms     String?
+  timestamp DateTime @default(now())
+}
+
+model KycProfile {
+  id               String   @id @default(cuid())
+  company          Company  @relation(fields: [companyId], references: [id])
+  companyId        String   @unique
+  complianceStatus String   @default("pending")
+  lastReviewDate   DateTime?
+  expiryDate       DateTime?
+  profileData      Json?    // Stores detailed KYC info: legalName, registrationNumber, taxId, etc.
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  auctionId       String?
+  companyId       String
+  amount          Float
+  exchangeCurrency String
+  rate            Float
+  status          String   @default("initiated")
+  createdAt       DateTime @default(now())
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code      String
+  email     String
+  phone     String?
+  channel   String   @default("email") // email, sms, whatsapp
+  status    String   @default("pending") // pending, verified, expired
+  expiresAt DateTime
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  
+  @@index([companyId])
+  @@index([code])
+}

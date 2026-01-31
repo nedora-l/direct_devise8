@@ -1,0 +1,24 @@
+# Cursor Rules for Direct Devise Project
+
+## Environment Files Access
+# Note: Cursor cannot directly access .env files for security reasons
+# To help with debugging, you can:
+# 1. Share specific env values when needed (without full keys)
+# 2. Use the /api/test/config endpoint to verify configuration
+# 3. Check server logs for environment variable issues
+
+## Important Environment Variables
+# VENT_AGENT_URL or NEXT_PUBLIC_VENT_AGENT_URL - URL of the ventilation agent server
+# GEMINI_API_KEY or NEXT_PUBLIC_GEMINI_API_KEY - Gemini API key for LLM
+# OCR_SPACE_KEY - OCR.space API key (optional)
+# DATABASE_URL - PostgreSQL connection string
+
+## Testing Configuration
+# Visit http://localhost:3000/api/test/config to see if env vars are loaded
+# Visit http://localhost:3000/api/test/extraction?companyId=XXX to test OCR extraction
+
+
+
+
+
+

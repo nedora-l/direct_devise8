@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build / Next
+.next
+out
+build
+dist
+
+# Env (ne jamais commiter les secrets)
+.env
+.env.local
+.env.*.local
+
+# Prisma local DB (optionnel)
+prisma/dev.db
+prisma/*.db
+*.db-journal
+
+# IDE / OS
+.vercel
+*.log
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
